@@ -42,10 +42,11 @@
 /*****************************************************************************
 * 3.Private enumerations, structures and unions using typedef
 *****************************************************************************/
-struct fts_mode_flag {
-	int fts_glove_mode_flag;
-	int fts_cover_mode_flag;
-	int fts_charger_mode_flag;
+enum _ex_mode {
+	MODE_GLOVE = 0,
+	MODE_COVER,
+	MODE_CHARGER,
+	REPORT_RATE,
 };
 
 struct fts_mode_flag g_fts_mode_flag;
@@ -64,9 +65,46 @@ static int fts_enter_charger_mode(struct i2c_client *client, int mode);
 /*****************************************************************************
 * 6.Static function prototypes
 *******************************************************************************/
+static int fts_ex_mode_switch(enum _ex_mode mode, u8 value)
+{
+	int ret = 0;
 
-#if FTS_GLOVE_EN
-static ssize_t fts_touch_glove_show(struct device *dev, struct device_attribute *attr, char *buf)
+	switch (mode) {
+	case MODE_GLOVE:
+		ret = fts_write_reg(FTS_REG_GLOVE_MODE_EN, value > 0 ? 1 : 0);
+		if (ret < 0)
+			FTS_ERROR("MODE_GLOVE switch to %d fail", value);
+		break;
+
+	case MODE_COVER:
+		ret = fts_write_reg(FTS_REG_COVER_MODE_EN, value > 0 ? 1 : 0);
+		if (ret < 0)
+			FTS_ERROR("MODE_COVER switch to %d fail", value);
+		break;
+
+	case MODE_CHARGER:
+		ret = fts_write_reg(FTS_REG_CHARGER_MODE_EN, value > 0 ? 1 : 0);
+		if (ret < 0)
+			FTS_ERROR("MODE_CHARGER switch to %d fail", value);
+		break;
+
+	case REPORT_RATE:
+		ret = fts_write_reg(FTS_REG_REPORT_RATE, value);
+		if (ret < 0)
+			FTS_ERROR("REPORT_RATE switch to %d fail", value);
+		break;
+
+	default:
+		FTS_ERROR("mode(%d) unsupport", mode);
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
+static ssize_t fts_glove_mode_show(
+	struct device *dev, struct device_attribute *attr, char *buf)
 {
 	int count;
 	u8 val;
@@ -284,19 +322,46 @@ static ssize_t fts_touch_charger_store(struct device *dev, struct device_attribu
 	return count;
 }
 
-/************************************************************************
-* Name: fts_enter_charger_mode
-* Brief:  change charger mode
-* Input:  charger mode
-* Output: no
-* Return: success >=0, otherwise failed
-***********************************************************************/
-static int fts_enter_charger_mode(struct i2c_client *client, int mode)
+static ssize_t fts_report_rate_show(
+	struct device *dev, struct device_attribute *attr, char *buf)
+{
+	int count = 0;
+	u8 val = 0;
+	struct fts_ts_data *ts_data = fts_data;
+	struct input_dev *input_dev = ts_data->input_dev;
+
+	mutex_lock(&input_dev->mutex);
+	fts_read_reg(FTS_REG_REPORT_RATE, &val);
+	count = scnprintf(buf + count, PAGE_SIZE, "Report Rate:%d\n",
+			ts_data->report_rate);
+	count += scnprintf(buf + count, PAGE_SIZE,
+			"Report Rate Reg(0x88):%d\n", val);
+	mutex_unlock(&input_dev->mutex);
+
+	return count;
+}
+
+static ssize_t fts_report_rate_store(
+	struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t count)
 {
 	int ret = 0;
-	static u8 buf_addr[2] = { 0 };
-	static u8 buf_value[2] = { 0 };
-	buf_addr[0] = FTS_REG_CHARGER_MODE_EN;	/* charger control */
+	struct fts_ts_data *ts_data = fts_data;
+	int rate;
+
+	ret = kstrtoint(buf, 16, &rate);
+	if (ret)
+		return ret;
+
+	if (rate != ts_data->report_rate) {
+		ret = fts_ex_mode_switch(REPORT_RATE, (u8)rate);
+		if (ret >= 0)
+			ts_data->report_rate = rate;
+	}
+
+	FTS_DEBUG("report rate:%d", ts_data->report_rate);
+	return count;
+}
 
 	if (fts_data->is_tp_testing) {
 		FTS_ERROR("tp is doing test, skip set charger mode\n");
@@ -325,6 +390,8 @@ static DEVICE_ATTR(fts_charger_mode, S_IRUGO | S_IWUSR, fts_touch_charger_show, 
 
 #endif
 
+static DEVICE_ATTR_RW(fts_report_rate);
+
 static struct attribute *fts_touch_mode_attrs[] = {
 #if FTS_GLOVE_EN
 	&dev_attr_fts_glove_mode.attr,
@@ -336,8 +403,7 @@ static struct attribute *fts_touch_mode_attrs[] = {
 
 #if FTS_CHARGER_EN
 	&dev_attr_fts_charger_mode.attr,
-#endif
-
+	&dev_attr_fts_report_rate.attr,
 	NULL,
 };
 
@@ -362,13 +428,30 @@ int fts_ex_mode_init(struct i2c_client *client)
 		FTS_DEBUG("[Mode]create sysfs succeeded");
 	}
 
-	return err;
+	if (ts_data->report_rate > 0)
+		fts_ex_mode_switch(REPORT_RATE, ts_data->report_rate);
 
+	return 0;
 }
 
 int fts_ex_mode_exit(struct i2c_client *client)
 {
-	sysfs_remove_group(&client->dev.kobj, &fts_touch_mode_group);
+	int ret = 0;
+
+	ts_data->glove_mode = false;
+	ts_data->cover_mode = false;
+	ts_data->charger_mode = false;
+	ts_data->report_rate = 0;
+
+	ret = sysfs_create_group(&ts_data->dev->kobj, &fts_touch_mode_group);
+	if (ret < 0) {
+		FTS_ERROR("create sysfs(ex_mode) fail");
+		sysfs_remove_group(&ts_data->dev->kobj, &fts_touch_mode_group);
+		return ret;
+	} else {
+		FTS_DEBUG("create sysfs(ex_mode) succeedfully");
+	}
+
 	return 0;
 }
 

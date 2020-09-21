@@ -73,55 +73,57 @@
 #define FTS_CMD_READ_ID_LEN					4
 #define FTS_CMD_READ_ID_LEN_INCELL			1
 /*register address*/
-#define FTS_REG_INT_CNT						0x8F
-#define FTS_REG_FLOW_WORK_CNT				0x91
-#define FTS_REG_WORKMODE					0x00
-#define FTS_REG_WORKMODE_FACTORY_VALUE		0x40
-#define FTS_REG_WORKMODE_WORK_VALUE			0x00
-#define FTS_REG_ESDCHECK_DISABLE			0x8D
-#define FTS_REG_CHIP_ID						0xA3
-#define FTS_REG_CHIP_ID2					0x9F
-#define FTS_REG_POWER_MODE					0xA5
-#define FTS_REG_POWER_MODE_SLEEP_VALUE		0x03
-#define FTS_REG_FW_VER						0xA6
-#define FTS_REG_VENDOR_ID					0xA8
-#define FTS_REG_LCD_BUSY_NUM				0xAB
-#define FTS_REG_FACE_DEC_MODE_EN			0xB0
-#define FTS_REG_FINGER_REPORT_DISABLE		0XB4
-#define FTS_REG_FACE_DEC_MODE_STATUS		0x01
-#define FTS_REG_IDE_PARA_VER_ID				0xB5
-#define FTS_REG_IDE_PARA_STATUS				0xB6
-#define FTS_REG_GLOVE_MODE_EN				0xC0
-#define FTS_REG_COVER_MODE_EN				0xC1
-#define FTS_REG_CHARGER_MODE_EN				0x8B
-#define FTS_REG_GESTURE_EN					0xD0
-#define FTS_REG_GESTURE_SUPPORT				0xCF
-#define FTS_REG_GESTURE_FOD_ON				0x02
-#define FTS_REG_GESTURE_FOD_NO_CAL			0x10
-#define FTS_REG_GESTURE_DOUBLETAP_ON		0x01
-#define FTS_REG_GESTURE_OUTPUT_ADDRESS		0xD3
-#define FTS_REG_FOD_OUTPUT_ADDRESS			0xE1
-#define FTS_REG_MODULE_ID					0xE3
-#define FTS_REG_LIC_VER						0xE4
-#define FTS_REG_ESD_SATURATE				0xED
-#define FTS_REG_SENSIVITY					0x81
-#define FTS_REG_THDIFF						0x85
-#define FTS_REG_MONITOR_MODE				0x86
-#define FTS_REG_REPORT_RATE					0x88
-#define FTS_REG_EDGE_FILTER_ORIENTATION		0x8C
-#define FTS_REG_EDGE_FILTER_LEVEL			0x8D
-#define FTS_REG_INT_ACK						0x3E
+#define FTS_REG_INT_CNT                     0x8F
+#define FTS_REG_FLOW_WORK_CNT               0x91
+#define FTS_REG_WORKMODE                    0x00
+#define FTS_REG_WORKMODE_FACTORY_VALUE      0x40
+#define FTS_REG_WORKMODE_WORK_VALUE         0x00
+#define FTS_REG_ESDCHECK_DISABLE            0x8D
+#define FTS_REG_CHIP_ID                     0xA3
+#define FTS_REG_CHIP_ID2                    0x9F
+#define FTS_REG_POWER_MODE                  0xA5
+#define FTS_REG_POWER_MODE_SLEEP            0x03
+#define FTS_REG_FW_VER                      0xA6
+#define FTS_REG_VENDOR_ID                   0xA8
+#define FTS_REG_LCD_BUSY_NUM                0xAB
+#define FTS_REG_FACE_DEC_MODE_EN            0xB0
+#define FTS_REG_FINGER_REPORT_DISABLE       0XB4
+#define FTS_REG_FACTORY_MODE_DETACH_FLAG    0xB4
+#define FTS_REG_FACE_DEC_MODE_STATUS        0x01
+#define FTS_REG_IDE_PARA_VER_ID             0xB5
+#define FTS_REG_IDE_PARA_STATUS             0xB6
+#define FTS_REG_GLOVE_MODE_EN               0xC0
+#define FTS_REG_COVER_MODE_EN               0xC1
+#define FTS_REG_GESTURE_SUPPORT             0xCF
+#define FTS_REG_GESTURE_FOD_ON              0x02
+#define FTS_REG_GESTURE_FOD_NO_CAL          0x10
+#define FTS_REG_GESTURE_DOUBLETAP_ON        0x01
+#define FTS_REG_REPORT_RATE                 0x88
+#define FTS_REG_CHARGER_MODE_EN             0x8B
+#define FTS_REG_GESTURE_EN                  0xD0
+#define FTS_REG_GESTURE_OUTPUT_ADDRESS      0xD3
+#define FTS_REG_FOD_OUTPUT_ADDRESS          0xE1
+#define FTS_REG_MODULE_ID                   0xE3
+#define FTS_REG_LIC_VER                     0xE4
+#define FTS_REG_ESD_SATURATE                0xED
+#define FTS_REG_SENSIVITY                   0x81
+#define FTS_REG_THDIFF                      0x85
+#define FTS_REG_MONITOR_MODE                0x86
+#define FTS_REG_REPORT_RATE                 0x88
+#define FTS_REG_EDGE_FILTER_ORIENTATION     0x8C
+#define FTS_REG_EDGE_FILTER_LEVEL           0x8D
+#define FTS_REG_INT_ACK                     0x3E
 
-//#define BTN_INFO							0x155
-#define FTS_SYSFS_ECHO_ON(buf)				(buf[0] == '1')
-#define FTS_SYSFS_ECHO_OFF(buf)				(buf[0] == '0')
 
-#define kfree_safe(pbuf) do { \
-	if (pbuf) { \
-		kfree(pbuf); \
-		pbuf = NULL; \
-	} \
-} while (0)
+#define FTS_SYSFS_ECHO_ON(buf)      (buf[0] == '1')
+#define FTS_SYSFS_ECHO_OFF(buf)     (buf[0] == '0')
+
+#define kfree_safe(pbuf) do {\
+	if (pbuf) {\
+		kfree(pbuf);\
+		pbuf = NULL;\
+	}\
+} while(0)
 
 /*****************************************************************************
 *  Alternative mode (When something goes wrong, the modules may be able to solve the problem.)

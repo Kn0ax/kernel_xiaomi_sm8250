@@ -154,6 +154,9 @@ struct fts_ts_data {
 	spinlock_t irq_lock;
 	struct mutex report_mutex;
 	int irq;
+	int log_level;
+	int fw_is_running; /* confirm fw is running when using spi:default 0 */
+	int dummy_byte;
 	bool suspended;
 	bool fw_loading;
 	bool irq_disabled;
@@ -164,6 +167,12 @@ struct fts_ts_data {
 #ifdef FTS_POWER_SOURCE_CUST_EN
 	bool power_disabled;
 #endif
+	bool glove_mode;
+	bool cover_mode;
+	bool charger_mode;
+	bool gesture_mode; /* gesture enable or disable, default: disable */
+	int report_rate;
+
 	/* multi-touch */
 	struct ts_event *events;
 	u8 *point_buf;
